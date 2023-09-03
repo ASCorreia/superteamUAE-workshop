@@ -10,6 +10,8 @@ pub mod solana_dev_workshop {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        let a = 8;
+        
         Ok(())
     }
 }

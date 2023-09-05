@@ -43,4 +43,12 @@ pub mod solana_dev_workshop {
 
         Ok(())
     }
+
+    pub fn transfer_spl(ctx: Context<TransferSpl>) -> Result<()> {
+        ctx.accounts.transfer_spl(3000000)?;
+
+        msg!("Tokens transfered successfuly");
+
+        Ok(())
+    }
 }

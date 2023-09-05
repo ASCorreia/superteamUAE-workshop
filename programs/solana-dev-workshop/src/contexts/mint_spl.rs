@@ -8,9 +8,9 @@ pub struct MintSPL<'info> {
     mint: Account<'info, Mint>,
     #[account(mut)]
     to_ata: Account<'info, TokenAccount>,
-    #[account(seeds = [b"counter", user.key().as_ref()], bump = authority.bump)]
+    #[account(seeds = [b"counter"/*, user.key().as_ref()*/], bump = authority.bump)]
     authority: Account<'info, CounterPDA>,
-    user: SystemAccount<'info>,
+    /*user: SystemAccount<'info>,*/
     token_program: Program<'info, Token>,
 }
 
@@ -19,7 +19,7 @@ impl<'info> MintSPL<'info> {
 
         let seeds = &[
             "counter".as_bytes(),
-            &self.user.key().clone().to_bytes(),
+            /*&self.user.key().clone().to_bytes(),*/
             &[self.authority.bump]
         ];
         let signer_seeds = &[&seeds[..]];

@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct InitializePDA<'info> {
-    #[account(init, seeds = [b"counter", user.key.as_ref()], bump, payer = user, space = 8 + 1 + 1)]
+    #[account(init, seeds = [b"counter"/*, user.key.as_ref()*/], bump, payer = user, space = 8 + 1 + 1)]
     pub account: Account<'info, CounterPDA>,
     #[account(mut)]
     pub user: Signer<'info>,

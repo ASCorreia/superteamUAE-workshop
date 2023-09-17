@@ -1,14 +1,14 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
-solana_dev_workshop = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+[programs.devnet]
+solana_dev_workshop = "8Pf8RCh4hEHqe9uVtVqs6SnytqfdmY3z28ky8A7JKDUQ"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "/home/ascespool/.config/solana/id.json"
 
 [scripts]

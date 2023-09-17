@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("8Pf8RCh4hEHqe9uVtVqs6SnytqfdmY3z28ky8A7JKDUQ");
 
 pub mod contexts;
 pub use contexts::*;
@@ -11,44 +11,56 @@ pub mod solana_dev_workshop {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-
         ctx.accounts.initialize()?;
 
-        msg!("Counter account initialized!");
-        
         Ok(())
     }
 
     pub fn increment(ctx: Context<Increment>) -> Result<()> {
-
         ctx.accounts.increment()?;
-
-        msg!("Counter incremented!");
 
         Ok(())
     }
 
     pub fn initialize_pda(ctx: Context<InitializePDA>) -> Result<()> {
-        ctx.accounts.initialize()?;
+        ctx.accounts.user_account.bump = *ctx.bumps.get("user_account").unwrap();
 
-        ctx.accounts.account.bump = *ctx.bumps.get("account").unwrap();
-
-        Ok(())
-    }
-
-    pub fn mint_to(ctx: Context<MintSPL>) -> Result<()> {
-        ctx.accounts.mint_to(5000000)?;
-
-        msg!("Tokens sucessfully minted");
+        ctx.accounts.initialize_pda()?;
 
         Ok(())
     }
 
-    pub fn transfer_spl(ctx: Context<TransferSpl>) -> Result<()> {
-        ctx.accounts.transfer_spl(3000000)?;
+    pub fn increment_pda(ctx: Context<IncrementPDA>) -> Result<()> {
+        ctx.accounts.increment_pda()?;
 
-        msg!("Tokens transfered successfuly");
+        Ok(())
+    }
 
+    pub fn mint_spl(ctx: Context<MintSPL>) -> Result<()> {
+        ctx.accounts.mint_spl()?;
+
+        Ok(())
+    }
+
+    pub fn mint_pda(ctx: Context<MintPDA>) -> Result<()> {
+        ctx.accounts.user_account.authority_bump = *ctx.bumps.get("authority").unwrap();
+
+        ctx.accounts.mint_pda()?;
+
+        Ok(())
+    }
+
+    pub fn transfer_spl(ctx: Context<TransferSPL>) -> Result<()> {
+        ctx.accounts.transfer_spl()?;
+
+        Ok(())
+    }
+
+    pub fn mint_nft(ctx: Context<MintNFT>, creator_key: Pubkey, uri: String, title: String) -> Result<()> {
+        ctx.accounts.mint_nft(creator_key, uri, title)?;
+
+        msg!("NFT Successfullt minted!");
+        
         Ok(())
     }
 }

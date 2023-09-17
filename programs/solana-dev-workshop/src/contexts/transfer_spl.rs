@@ -1,39 +1,37 @@
-use anchor_spl::token::{TokenAccount, Token, Transfer};
+use anchor_spl::{token::{TokenAccount, Token, Mint, Transfer}, associated_token::AssociatedToken};
 
 use crate::*;
-
 #[derive(Accounts)]
-pub struct TransferSpl<'info> {
+pub struct TransferSPL<'info> {
     #[account(mut)]
-    from_ata: Account<'info, TokenAccount>,
+    from: Account<'info, TokenAccount>,
+    #[account(init_if_needed, payer = user, associated_token::mint = mint, associated_token::authority = receiver)]
+    receiver_pda: Account<'info, TokenAccount>,
     #[account(mut)]
-    to_ata: Account<'info, TokenAccount>,
-    #[account(seeds = [b"counter"], bump = authority.bump)]
-    authority: Account<'info, CounterPDA>,
+    user: Signer<'info>,
+    receiver: Account<'info, CounterPDA>,
+    mint: Account<'info, Mint>,
     token_program: Program<'info, Token>,
+    associated_token_program: Program<'info, AssociatedToken>,
+    system_program: Program<'info, System>,
 }
 
-impl<'info> TransferSpl<'info> {
-    pub fn transfer_spl(&mut self, amount: usize) -> Result<()> {
-        let seeds = &[
-            "counter".as_bytes(),
-            /*&self.user.key().clone().to_bytes(),*/
-            &[self.authority.bump]
-        ];
-        let signer_seeds = &[&seeds[..]];
-
+impl<'info> TransferSPL<'info> {
+    pub fn transfer_spl(&mut self) -> Result<()> {
         let cpi_program = self.token_program.to_account_info();
 
         let cpi_accounts = Transfer {
-            from: self.from_ata.to_account_info(),
-            to: self.to_ata.to_account_info(),
-            authority: self.authority.to_account_info(),
+            from: self.from.to_account_info(),
+            to: self.receiver_pda.to_account_info(),
+            authority: self.user.to_account_info(),
         };
 
-        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-        anchor_spl::token::transfer(cpi_ctx, amount as u64)?;
+        anchor_spl::token::transfer(cpi_ctx, 500000)?;
 
+        msg!("Tokens transferred!");
+        
         Ok(())
     }
 }

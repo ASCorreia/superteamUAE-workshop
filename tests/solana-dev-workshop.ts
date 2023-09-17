@@ -15,3 +15,9 @@ describe("solana-dev-workshop", () => {
     console.log("Your transaction signature", tx);
   });
 });
+
+/* Helper funtions
+Get the number of tokens of a specific account -> (await provider.connection.getTokenAccountBalance(address)).value.amount);
+Fetch a specific account -> await program.account.counter.fetch(userKeypair.publicKey);
+*/
+

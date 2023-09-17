@@ -36,6 +36,12 @@ pub mod solana_dev_workshop {
         Ok(())
     }
 
+    pub fn close_pda(ctx: Context<Close>) -> Result<()> {
+        ctx.accounts.close()?;
+
+        Ok(())
+    }
+
     pub fn mint_spl(ctx: Context<MintSPL>) -> Result<()> {
         ctx.accounts.mint_spl()?;
 
@@ -63,4 +69,5 @@ pub mod solana_dev_workshop {
         
         Ok(())
     }
+
 }

@@ -7,6 +7,7 @@ import { MINT_SIZE, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, c
 import { BN, min } from "bn.js";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { keypair } from "./wallet"
+import { ASSOCIATED_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
 
 const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 const getMetadata = async (mint: anchor.web3.PublicKey): Promise<anchor.web3.PublicKey> => {
@@ -46,159 +47,104 @@ describe("solana-dev-workshop", () => {
 
   const userKeypair = Keypair.generate();
 
-  const userKeypair2 = Keypair.generate();
+  let mint = Keypair.generate();
+  let receiver = getAssociatedTokenAddressSync(mint.publicKey, provider.publicKey);
 
-  const userPDA = findProgramAddressSync([anchor.utils.bytes.utf8.encode("counter")/*, provider.publicKey.toBuffer()*/], program.programId);
+  let userPDA = findProgramAddressSync([anchor.utils.bytes.utf8.encode("Counter"), provider.publicKey.toBuffer()], program.programId);
 
-  let mint: PublicKey = undefined;
-
-  it("Request airdrop", async () => {
-    try {
-      let airdropTx = await provider.connection.requestAirdrop(userKeypair.publicKey, 0.1 * LAMPORTS_PER_SOL);
-      let latestBlockHash = await provider.connection.getLatestBlockhash();
-    
-      await provider.connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: airdropTx,
-      });
-
-      console.log("\n\nAirdrop Operation Successfull");
-    }
-    catch(error) {
-      console.log("Error while trying to request airdrop!");
-      console.log("Trying to transfer from anchor provider");
-      try {
-        const transaction = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: provider.wallet.publicKey,
-            toPubkey:  userKeypair.publicKey,
-            lamports: 0.1 * LAMPORTS_PER_SOL,
-          })
-        );
-        transaction.recentBlockhash = (await provider.connection.getLatestBlockhash('finalized')).blockhash;
-        transaction.feePayer = provider.wallet.publicKey;
-            
-        // Sign transaction, broadcast, and confirm
-        const signature = await provider.sendAndConfirm(transaction);
-        console.log(`Transfer Success! Check out your TX here: 
-        https://explorer.solana.com/tx/${signature}?cluster=devnet`);
-      } catch(e) {
-        console.error(`Oops, something went wrong: ${e}`)
-      }
-    }
-  });
-
-  it("Request airdrop", async () => {
-    try {
-      let airdropTx = await provider.connection.requestAirdrop(userKeypair2.publicKey, 0.1 * LAMPORTS_PER_SOL);
-      let latestBlockHash = await provider.connection.getLatestBlockhash();
-    
-      await provider.connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: airdropTx,
-      });
-
-      console.log("\n\nAirdrop Operation Successfull");
-    }
-    catch(error) {
-      console.log("Error while trying to request airdrop!");
-      console.log("Trying to transfer from anchor provider");
-      try {
-        const transaction = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: provider.wallet.publicKey,
-            toPubkey:  userKeypair2.publicKey,
-            lamports: 0.1 * LAMPORTS_PER_SOL,
-          })
-        );
-        transaction.recentBlockhash = (await provider.connection.getLatestBlockhash('finalized')).blockhash;
-        transaction.feePayer = provider.wallet.publicKey;
-            
-        // Sign transaction, broadcast, and confirm
-        const signature = await provider.sendAndConfirm(transaction);
-        console.log(`Transfer Success! Check out your TX here: 
-        https://explorer.solana.com/tx/${signature}?cluster=devnet`);
-      } catch(e) {
-        console.error(`Oops, something went wrong: ${e}`)
-      }
-    }
-  });
-
-  it("Is initialized!", async () => {
+  it("Initialize user account", async () => {
     // Add your test here.
     const tx = await program.methods.initialize().accounts({
-      account: userKeypair.publicKey,
+      userAccount: userKeypair.publicKey,
       user: provider.publicKey,
-      systemProgram: SystemProgram.programId
+      systemProgram: SystemProgram.programId,
     }).signers([userKeypair]).rpc();
-
-    console.log("\n\nCounter account succesfully initialized! TxID: ", tx);
+    console.log("\n\nUser counter account initialized: TxID - ", tx);
   });
 
-  it("Increment Account counter!", async() => {
+  it("Increment user account", async () => {
+    let counter = await program.account.counter.fetch(userKeypair.publicKey);
+    console.log("\n\nUser counter value before incrementing: ", counter.counter);
+
     const tx = await program.methods.increment().accounts({
-      account: userKeypair.publicKey,
+      userAccount: userKeypair.publicKey,
+      user: provider.publicKey,
     }).rpc();
+    console.log("User account incremented! TxID: ", tx);
+    
+    counter = await program.account.counter.fetch(userKeypair.publicKey);
+    console.log("User counter value after incrementing: ", counter.counter);
+  })
 
-    let fetched = await program.account.counter.fetch(userKeypair.publicKey);
-    console.log(fetched.counter);
+  it("Initialize user account PDA", async () => {
 
-    console.log("\n\nAccount counter incremented! TxID: ", tx);
-  });
-
-  it("Initialize PDA Counter Account!", async() => {
     const tx = await program.methods.initializePda().accounts({
-      account: userPDA[0],
+      userAccount: userPDA[0],
       user: provider.publicKey,
       systemProgram: SystemProgram.programId,
     }).rpc();
 
-    console.log("\n\nPDA Account Initialized! TxID: ", tx);
+    console.log("\n\nUser PDA account initialized! TxID: ", tx);
+  })
+
+  it("Increment user account PDA", async () => {
+    const tx = await program.methods.incrementPda().accounts({
+      userAccount: userPDA[0],
+      user: provider.publicKey,
+    }).rpc()
+
+    console.log("\n\nUser PDA account incremented!");
   });
 
-  it("Mint some SPL Tokens!", async() => {
-    let autorithyPDA = findProgramAddressSync([anchor.utils.bytes.utf8.encode("escrow")], program.programId);
-
-    const createdMint = await createMint(provider.connection, userKeypair2, autorithyPDA[0], autorithyPDA[0], 6);
-    mint = createdMint;
-    console.log("\n\nMint created!");
-
-    const to_ata = await getOrCreateAssociatedTokenAccount(provider.connection, userKeypair2, mint, userPDA[0], true);
-    console.log("ATA created!");
-
-    const tx = await program.methods.mintTo().accounts({
-      mint: mint,
-      toAta: to_ata.address,
-      //user: provider.publicKey,
-      account: userPDA[0],
-      authority: autorithyPDA[0],
+  it("Mint some tokens", async () => {
+    const tx = await program.methods.mintSpl().accounts({
+      mint: mint.publicKey,
+      receiver: receiver,
+      user: provider.publicKey,
       tokenProgram: TOKEN_PROGRAM_ID,
-    }).rpc({skipPreflight: true});
+      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    }).signers([mint]).rpc();
 
-    console.log("\n\nTokens minted! TxID: ", tx);
+    console.log("\n\nToken minted! TxID: ", tx);
+    console.log("Number of tokens after minting: ", (await provider.connection.getTokenAccountBalance(receiver)).value.amount);
   });
 
-  it("Transfer some SPL Tokens!", async() => {
-    const from_ata = await getOrCreateAssociatedTokenAccount(provider.connection, userKeypair2, mint, userPDA[0], true);
-    const to_ata = await getOrCreateAssociatedTokenAccount(provider.connection, userKeypair2, mint, userKeypair.publicKey);
+  it("Mint some tokens from a PDA", async() => {
+    let mint = Keypair.generate();
+    let receiver = getAssociatedTokenAddressSync(mint.publicKey, provider.publicKey);
 
-    console.log("\n\nOrigin ATA Balance before transfer: ", (await provider.connection.getTokenAccountBalance(from_ata.address)).value.amount);
-    console.log("Destination ATA Balance before transfer: ", (await provider.connection.getTokenAccountBalance(to_ata.address)).value.amount);
+    let authority = findProgramAddressSync([anchor.utils.bytes.utf8.encode("authority")], program.programId);
+
+    const tx = await program.methods.mintPda().accounts({
+      authority: authority[0],
+      userAccount: userPDA[0],
+      user: provider.publicKey,
+      mint: mint.publicKey,
+      receiver: receiver,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    }).signers([mint]).rpc();
+
+    console.log("\n\nToken minted! TxID: ", tx);
+    console.log("Number of tokens after minting: ", (await provider.connection.getTokenAccountBalance(receiver)).value.amount);
+  })
+
+  it("Transfer some tokens", async() => {
+    let receiverPDA = getAssociatedTokenAddressSync(mint.publicKey, userPDA[0], true);
 
     const tx = await program.methods.transferSpl().accounts({
-      fromAta: from_ata.address,
-      toAta: to_ata.address,
-      authority: userPDA[0],
+      from: receiver,
+      receiverPda: receiverPDA,
+      user: provider.publicKey,
+      receiver: userPDA[0],
+      mint: mint.publicKey,
       tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
     }).rpc();
-
-    console.log("\n\nOrigin ATA Balance before transfer: ", (await provider.connection.getTokenAccountBalance(from_ata.address)).value.amount);
-    console.log("Destination ATA Balance before transfer: ", (await provider.connection.getTokenAccountBalance(to_ata.address)).value.amount);
-
-    console.log("\n\nTokens Transferred! TxID: ", tx);
-  });
+    console.log("\n\nTokens transferred! TxID: ", tx);
+  })
 
   it("Mint an NFT", async() => {
     const lamports: number = await program.provider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);

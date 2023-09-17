@@ -10,9 +10,7 @@ pub mod solana_dev_workshop {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+
         Ok(())
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}

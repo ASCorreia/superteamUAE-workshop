@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { SolanaDevWorkshop } from "../target/types/solana_dev_workshop";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram, Transaction } from "@solana/web3.js";
 import { KeypairIdentityDriver, Metaplex, keypairIdentity } from "@metaplex-foundation/js"
 import { MINT_SIZE, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMint, getAssociatedTokenAddress, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, transfer } from "@solana/spl-token";
 import { BN, min } from "bn.js";
@@ -97,6 +97,8 @@ describe("solana-dev-workshop", () => {
   });
 
   it("Mint some tokens", async () => {
+    let metadata = await getMetadata(mint.publicKey);
+
     const tx = await program.methods.mintSpl().accounts({
       mint: mint.publicKey,
       receiver: receiver,
@@ -104,6 +106,9 @@ describe("solana-dev-workshop", () => {
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
+      tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+      metadata: metadata,
+      rent: SYSVAR_RENT_PUBKEY,
     }).signers([mint]).rpc();
 
     console.log("\n\nToken minted! TxID: ", tx);
@@ -186,12 +191,11 @@ describe("solana-dev-workshop", () => {
     const metadataAddress = await getMetadata(NFTmintKey.publicKey);
     const masterEdition = await getMasterEdition(NFTmintKey.publicKey);
     //Executes our smart contract to mint our token into our specified ATA
-    const tx = await program.rpc.mintNft(
+    const tx = await program.methods.mintNft(
       new anchor.web3.PublicKey("6eGKgDhFAaLYkxoDMyx2NU4RyrSKfCXdRmqtjT7zodxQ"),
       "https://arweave.net/HL0MkXm11IofyXgTzGWZPFXlCE9YKGt1vKc44w6ttA8",
-      "Superteam UAE Dev Workshop",
-      {
-        accounts: {
+      "Superteam UAE Dev Workshop").accounts(
+        {
           mintAuthority: provider.wallet.publicKey,
           mint: NFTmintKey.publicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -203,8 +207,7 @@ describe("solana-dev-workshop", () => {
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
           masterEdition: masterEdition,
         },
-      }
-    );
+    ).rpc();
     console.log("Your transaction signature", tx);       
     console.log("NFT Mint Operation Finished!");
 

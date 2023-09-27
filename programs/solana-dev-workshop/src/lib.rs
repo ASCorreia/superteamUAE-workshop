@@ -45,6 +45,8 @@ pub mod solana_dev_workshop {
     pub fn mint_spl(ctx: Context<MintSPL>) -> Result<()> {
         ctx.accounts.mint_spl()?;
 
+        ctx.accounts.associate_metadata()?;
+
         Ok(())
     }
 

@@ -6,30 +6,27 @@ use crate::*;
 
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
+    pub mint: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub token_account: AccountInfo<'info>,
     pub mint_authority: Signer<'info>,
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub mint: UncheckedAccount<'info>,
-    //#[account(mut)]
-    pub token_program: Program<'info, Token>,
+    pub metadata: AccountInfo<'info>,
     /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub metadata: UncheckedAccount<'info>,
-    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub master_edition: AccountInfo<'info>,
     #[account(mut)]
-    pub token_account: UncheckedAccount<'info>,
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    pub token_metadata_program: UncheckedAccount<'info>,
-    /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut)]
-    pub payer: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
+    pub payer: Signer<'info>,
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub rent: AccountInfo<'info>,
+    pub token_program: Program<'info, Token>,
     /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut)]
-    pub master_edition: UncheckedAccount<'info>,
+    pub token_metadata_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> MintNFT<'info> {

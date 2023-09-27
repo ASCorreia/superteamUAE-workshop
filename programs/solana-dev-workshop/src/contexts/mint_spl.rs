@@ -1,6 +1,6 @@
 use anchor_spl::{token::{Mint, TokenAccount, Token, MintTo}, associated_token::AssociatedToken};
-//use mpl_token_metadata::instruction::create_metadata_accounts_v3;
-//use solana_program::program::invoke;
+use mpl_token_metadata::instruction::create_metadata_accounts_v3;
+use solana_program::program::invoke;
 
 use crate::*;
 #[derive(Accounts)]
@@ -15,13 +15,13 @@ pub struct MintSPL<'info> {
     associated_token_program: Program<'info, AssociatedToken>,
     system_program: Program<'info, System>,
 
-    // CHECK: This is not dangerous because we don't read or write from this account
-    //pub token_metadata_program: AccountInfo<'info>,
-    // CHECK: This is not dangerous because we don't read or write from this account
-    //#[account(mut)]
-    //pub metadata: AccountInfo<'info>,
-    // CHECK: This is not dangerous because we don't read or write from this account
-    //pub rent: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub token_metadata_program: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub metadata: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    pub rent: AccountInfo<'info>,
 }
 
 impl<'info> MintSPL<'info> {
@@ -43,7 +43,7 @@ impl<'info> MintSPL<'info> {
         Ok(())
     }
 
-    /*
+    
     pub fn associate_metadata(&mut self) -> Result<()> {
         let account_info = vec![
             self.metadata.to_account_info(),
@@ -90,5 +90,5 @@ impl<'info> MintSPL<'info> {
         msg!("Metadata Account Created !!!");
 
         Ok(())
-    }*/
+    }
 }
